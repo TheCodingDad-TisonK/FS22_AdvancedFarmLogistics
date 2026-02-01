@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="61">
+    <author>TisonK</author>
+    <version>1.0.0.0</version>
+    <title>
+        <en>Advanced Farm Logistics Manager</en>
+    </title>
+    <description>
+        <en><![CDATA[Manage farm logistics with supply chains, AI workers, maintenance schedules, and logistical challenges. Optimize operations, hire and manage workers, and maintain equipment efficiency.]]></en>
+    </description>
+    <iconFilename>icon.dds</iconFilename>
+    <multiplayer supported="true"/>
+    <extraSourceFiles>
+        <sourceFile filename="main.lua" />
+    </extraSourceFiles>
+</modDesc>
