@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<GUIProfiles>
+    <Profile name="ingameMenuSettingsList" extends="uiInGameMenuList">
+        <Value name="size" value="316px 120px"/>
+        <Value name="listItemHeight" value="24px"/>
+        <Value name="margin" value="0 12px 24px 12px"/>
+    </Profile>
+    
+    <Profile name="ingameMenuSettingsTwoColumnLayout" extends="uiFlowLayout">
+        <Value name="size" value="632px 300px"/>
+        <Value name="isHorizontal" value="true"/>
+        <Value name="margin" value="0 12px 24px 12px"/>
+    </Profile>
+    
+    <Profile name="ingameMenuSettingsColumn" extends="uiEmpty">
+        <Value name="size" value="300px 300px"/>
+        <Value name="margin" value="0 12px 0 0"/>
+    </Profile>
+    
+    <Profile name="ingameMenuSettingsButtonRow" extends="uiFlowLayout">
+        <Value name="size" value="632px 48px"/>
+        <Value name="isHorizontal" value="true"/>
+        <Value name="margin" value="0 12px 24px 12px"/>
+    </Profile>
+</GUIProfiles>

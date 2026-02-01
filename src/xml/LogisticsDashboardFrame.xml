@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<GUI name="LogisticsDashboard">
+    <GuiElement type="empty" profile="uiInGameMenuFrame">
+        <!-- Header -->
+        <GuiElement type="empty" profile="ingameMenuFrameHeaderPanel">
+            <GuiElement type="bitmap" profile="ingameMenuGeneralSettingsHeaderIcon" />
+            <GuiElement type="text" profile="ingameMenuFrameHeaderText" text="Logistics Dashboard" />
+        </GuiElement>
+
+        <!-- Content Box -->
+        <GuiElement type="empty" profile="ingameMenuSettingsBox" id="settingsContainer">
+            <GuiElement type="bitmap" profile="topScrollClipper" name="topClipper" />
+            <GuiElement type="bitmap" profile="bottomScrollClipper" name="bottomClipper" />
+            <GuiElement type="scrollingLayout" profile="ingameMenuSettingsLayout" id="boxLayout" topClipperElementName="topClipper" bottomClipperElementName="bottomClipper">
+                
+                <!-- System Status -->
+                <GuiElement type="text" profile="settingsMenuSubtitle" text="System Status" />
+                <GuiElement type="text" profile="multiTextOptionSettingsText" id="systemStatusText" />
+                
+                <!-- Supply Chains -->
+                <GuiElement type="text" profile="settingsMenuSubtitle" text="Supply Chains" />
+                <GuiElement type="list" profile="ingameMenuSettingsList" id="supplyChainList" />
+                
+                <!-- Active Deliveries -->
+                <GuiElement type="text" profile="settingsMenuSubtitle" text="Active Deliveries" />
+                <GuiElement type="list" profile="ingameMenuSettingsList" id="deliveryList" />
+                
+                <!-- Inventory -->
+                <GuiElement type="text" profile="settingsMenuSubtitle" text="Warehouse Inventory" />
+                <GuiElement type="list" profile="ingameMenuSettingsList" id="inventoryList" />
+                
+                <!-- Action Buttons -->
+                <GuiElement type="flowLayout" profile="ingameMenuSettingsButtonRow">
+                    <GuiElement type="empty" profile="ingameMenuGameSettingsTextInputWrapper">
+                        <GuiElement type="button" profile="ingameMenuSettingsPauseButton" text="Order Supplies" onClick="onOrderSuppliesClick" id="orderSuppliesButton" />
+                        <GuiElement type="text" profile="multiTextOptionSettingsTitle" text="" />
+                        <GuiElement type="text" profile="multiTextOptionSettingsTooltip" text="Order supplies for the farm" />
+                    </GuiElement>
+                    
+                    <GuiElement type="empty" profile="ingameMenuGameSettingsTextInputWrapper">
+                        <GuiElement type="button" profile="ingameMenuSettingsPauseButton" text="Optimize Supply Chains" onClick="onOptimizeClick" id="optimizeButton" />
+                        <GuiElement type="text" profile="multiTextOptionSettingsTitle" text="" />
+                        <GuiElement type="text" profile="multiTextOptionSettingsTooltip" text="Run supply chain optimization" />
+                    </GuiElement>
+                </GuiElement>
+                
+            </GuiElement>
+        </GuiElement>
+    </GuiElement>
+</GUI>
