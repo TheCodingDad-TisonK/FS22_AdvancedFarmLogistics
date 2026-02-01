@@ -3,8 +3,6 @@
 
 A comprehensive farm management mod for Farming Simulator 22 that adds supply chain logistics, worker AI management, and equipment maintenance systems.
 
-![Mod Icon](icon.png)
-
 ## Features
 
 ### 🚚 Supply Chain Management
