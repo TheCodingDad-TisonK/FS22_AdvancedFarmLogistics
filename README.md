@@ -1,5 +1,7 @@
-
 # Advanced Farm Logistics Manager
+![Downloads](https://img.shields.io/github/downloads/TheCodingDad-TisonK/FS22_AdvancedFarmLogistics/total?style=for-the-badge)
+![Release](https://img.shields.io/github/v/release/TheCodingDad-TisonK/FS22_AdvancedFarmLogistics?style=for-the-badge)
+![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red?style=for-the-badge)
 
 A comprehensive farm management mod for Farming Simulator 22 that adds supply chain logistics, worker AI management, and equipment maintenance systems.
 
