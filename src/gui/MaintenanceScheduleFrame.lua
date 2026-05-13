@@ -6,7 +6,7 @@ MaintenanceScheduleFrame = {}
 
 local MaintenanceScheduleFrame_mt = Class(MaintenanceScheduleFrame, TabbedMenuFrameElement)
 
-MaintenanceScheduleFrame.CONTROLS = { 'maintenanceList', 'equipmentStatsText', 'performMaintenanceButton', 'registerEquipmentButton', 'maintenanceHistoryButton' }
+MaintenanceScheduleFrame.CONTROLS = { 'maintenanceList', 'equipmentStatsText', 'performMaintenanceButton', 'maintenanceHistoryButton' }
 
 function MaintenanceScheduleFrame.new(target, customMt)
     local self = TabbedMenuFrameElement.new(target, customMt or MaintenanceScheduleFrame_mt)
