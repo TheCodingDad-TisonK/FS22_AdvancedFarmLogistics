@@ -26,12 +26,6 @@
                     </GuiElement>
                     
                     <GuiElement type="empty" profile="ingameMenuGameSettingsTextInputWrapper">
-                        <GuiElement type="button" profile="ingameMenuSettingsPauseButton" text="Register Vehicle" onClick="onRegisterEquipmentClick" id="registerEquipmentButton" />
-                        <GuiElement type="text" profile="multiTextOptionSettingsTitle" text="" />
-                        <GuiElement type="text" profile="multiTextOptionSettingsTooltip" text="Register current vehicle for maintenance tracking" />
-                    </GuiElement>
-                    
-                    <GuiElement type="empty" profile="ingameMenuGameSettingsTextInputWrapper">
                         <GuiElement type="button" profile="ingameMenuSettingsPauseButton" text="View History" onClick="onMaintenanceHistoryClick" id="maintenanceHistoryButton" />
                         <GuiElement type="text" profile="multiTextOptionSettingsTitle" text="" />
                         <GuiElement type="text" profile="multiTextOptionSettingsTooltip" text="View maintenance history for selected equipment" />

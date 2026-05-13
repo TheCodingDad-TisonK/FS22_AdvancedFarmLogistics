@@ -102,6 +102,11 @@ function AdvancedFarmLogistics:loadMap()
     self:initializeLogistics()
     self:initializeWorkers()
     self:initializeMaintenance()
+
+    -- INJECT THE LOAD HOOK HERE:
+    if g_currentMission and g_currentMission.missionInfo then
+        self:loadMasterData(g_currentMission.missionInfo.savegameDirectory)
+    end
     
     -- Show welcome message
     self:showWelcomeMessage()
@@ -911,4 +916,235 @@ end
 -- =====================
 -- REGISTRATION
 -- =====================
+
+-- =====================
+-- MASTER SAVE SYSTEM
+-- =====================
+function AdvancedFarmLogistics:saveMasterData(savegameDirectory)
+    if not savegameDirectory then return end
+
+    local xmlFilePath = savegameDirectory .. "/advancedFarmLogistics_save.xml"
+    local xmlFile = createXMLFile("afl_save", xmlFilePath, "advancedFarmLogistics")
+    if xmlFile == 0 then return end
+
+    -- 1. Save Maintenance
+    local mIndex = 0
+    for _, sched in pairs(self.maintenance.equipmentSchedule) do
+        local key = string.format("advancedFarmLogistics.maintenance.equipment(%d)", mIndex)
+        setXMLString(xmlFile, key.."#id", sched.equipmentId)
+        setXMLString(xmlFile, key.."#vehicleName", sched.vehicleName or "Unknown")
+        setXMLInt(xmlFile, key.."#interval", sched.maintenanceInterval)
+        setXMLInt(xmlFile, key.."#last", sched.lastMaintenance)
+        setXMLInt(xmlFile, key.."#next", sched.nextMaintenance)
+        mIndex = mIndex + 1
+    end
+
+    -- 2. Save Hired Workers
+    local wIndex = 0
+    for _, worker in ipairs(self.workers.hiredWorkers) do
+        local key = string.format("advancedFarmLogistics.workers.hired(%d)", wIndex)
+        setXMLString(xmlFile, key.."#id", worker.id)
+        setXMLString(xmlFile, key.."#name", worker.name)
+        setXMLFloat(xmlFile, key.."#skill", worker.skill)
+        setXMLInt(xmlFile, key.."#wage", worker.wage)
+        wIndex = wIndex + 1
+    end
+
+    -- 3. Save Warehouse Inventory
+    local iIndex = 0
+    for product, qty in pairs(self.logistics.warehouseInventory) do
+        local key = string.format("advancedFarmLogistics.logistics.inventory.item(%d)", iIndex)
+        setXMLString(xmlFile, key.."#product", product)
+        setXMLInt(xmlFile, key.."#quantity", qty)
+        iIndex = iIndex + 1
+    end
+
+    -- 4. Save Supply Chain Statuses
+    local sIndex = 0
+    for _, chain in ipairs(self.logistics.supplyChains) do
+        local key = string.format("advancedFarmLogistics.logistics.supplyChains.chain(%d)", sIndex)
+        setXMLString(xmlFile, key.."#id", chain.id)
+        setXMLFloat(xmlFile, key.."#efficiency", chain.efficiency or 1.0)
+        setXMLString(xmlFile, key.."#status", chain.status or "active")
+        sIndex = sIndex + 1
+    end
+
+    -- 5. Save Pending Orders
+    local pIndex = 0
+    for _, order in ipairs(self.logistics.pendingOrders) do
+        local key = string.format("advancedFarmLogistics.logistics.pendingOrders.order(%d)", pIndex)
+        setXMLString(xmlFile, key.."#id", order.id)
+        setXMLString(xmlFile, key.."#product", order.product)
+        setXMLInt(xmlFile, key.."#quantity", order.quantity)
+        setXMLInt(xmlFile, key.."#leadTime", order.leadTime)
+        setXMLInt(xmlFile, key.."#orderDate", order.orderDate)
+        setXMLString(xmlFile, key.."#status", order.status)
+        setXMLInt(xmlFile, key.."#estimatedArrival", order.estimatedArrival)
+        setXMLFloat(xmlFile, key.."#unitPrice", order.unitPrice)
+        setXMLFloat(xmlFile, key.."#orderCost", order.orderCost)
+        setXMLFloat(xmlFile, key.."#shippingCost", order.shippingCost)
+        setXMLFloat(xmlFile, key.."#totalCost", order.totalCost)
+        if order.supplier and order.supplier.name then
+            setXMLString(xmlFile, key.."#supplierName", order.supplier.name)
+        end
+        pIndex = pIndex + 1
+    end
+
+    -- 6. Save Active Deliveries
+    local dIndex = 0
+    for _, delivery in ipairs(self.logistics.activeDeliveries) do
+        local key = string.format("advancedFarmLogistics.logistics.activeDeliveries.delivery(%d)", dIndex)
+        setXMLString(xmlFile, key.."#product", delivery.product)
+        setXMLInt(xmlFile, key.."#quantity", delivery.quantity)
+        setXMLString(xmlFile, key.."#destination", delivery.destination or "Warehouse")
+        setXMLString(xmlFile, key.."#status", delivery.status)
+        dIndex = dIndex + 1
+    end
+    
+    saveXMLFile(xmlFile)
+    delete(xmlFile)
+    print("[AdvancedFarmLogistics] Master save file successfully written.")
+end
+
+-- =====================
+-- MASTER LOAD SYSTEM
+-- =====================
+function AdvancedFarmLogistics:loadMasterData(savegameDirectory)
+    if not savegameDirectory then return end
+
+    local xmlFilePath = savegameDirectory .. "/advancedFarmLogistics_save.xml"
+    if not fileExists(xmlFilePath) then 
+        print("[AdvancedFarmLogistics] No existing save found. Starting fresh.")
+        return 
+    end
+
+    local xmlFile = loadXMLFile("afl_save", xmlFilePath)
+    if xmlFile == 0 then return end
+
+    -- 1. Load Maintenance
+    self.maintenance.equipmentSchedule = {}
+    local mIndex = 0
+    while true do
+        local key = string.format("advancedFarmLogistics.maintenance.equipment(%d)", mIndex)
+        if not hasXMLProperty(xmlFile, key) then break end
+
+        local eqId = getXMLString(xmlFile, key.."#id")
+        self.maintenance.equipmentSchedule[eqId] = {
+            equipmentId = eqId,
+            vehicleName = getXMLString(xmlFile, key.."#vehicleName"),
+            maintenanceInterval = getXMLInt(xmlFile, key.."#interval"),
+            lastMaintenance = getXMLInt(xmlFile, key.."#last"),
+            nextMaintenance = getXMLInt(xmlFile, key.."#next"),
+            maintenanceHistory = {}
+        }
+        mIndex = mIndex + 1
+    end
+
+    -- 2. Load Hired Workers
+    self.workers.hiredWorkers = {}
+    local wIndex = 0
+    while true do
+        local key = string.format("advancedFarmLogistics.workers.hired(%d)", wIndex)
+        if not hasXMLProperty(xmlFile, key) then break end
+
+        table.insert(self.workers.hiredWorkers, {
+            id = getXMLString(xmlFile, key.."#id"),
+            name = getXMLString(xmlFile, key.."#name"),
+            skill = getXMLFloat(xmlFile, key.."#skill"),
+            wage = getXMLInt(xmlFile, key.."#wage")
+        })
+        wIndex = wIndex + 1
+    end
+
+    -- 3. Load Warehouse Inventory
+    self.logistics.warehouseInventory = {}
+    local iIndex = 0
+    while true do
+        local key = string.format("advancedFarmLogistics.logistics.inventory.item(%d)", iIndex)
+        if not hasXMLProperty(xmlFile, key) then break end
+
+        local product = getXMLString(xmlFile, key.."#product")
+        local qty = getXMLInt(xmlFile, key.."#quantity")
+        self.logistics.warehouseInventory[product] = qty
+        iIndex = iIndex + 1
+    end
+
+    -- 4. Load Supply Chain Statuses
+    local sIndex = 0
+    while true do
+        local key = string.format("advancedFarmLogistics.logistics.supplyChains.chain(%d)", sIndex)
+        if not hasXMLProperty(xmlFile, key) then break end
+
+        local cId = getXMLString(xmlFile, key.."#id")
+        local cEff = getXMLFloat(xmlFile, key.."#efficiency")
+        local cStat = getXMLString(xmlFile, key.."#status")
+        
+        -- Update the efficiency of the chains created during initialization
+        for _, chain in ipairs(self.logistics.supplyChains) do
+            if chain.id == cId then
+                chain.efficiency = cEff
+                chain.status = cStat
+            end
+        end
+        sIndex = sIndex + 1
+    end
+
+-- 5. Load Pending Orders
+    self.logistics.pendingOrders = {}
+    local pIndex = 0
+    while true do
+        local key = string.format("advancedFarmLogistics.logistics.pendingOrders.order(%d)", pIndex)
+        if not hasXMLProperty(xmlFile, key) then break end
+
+        local supplierName = getXMLString(xmlFile, key.."#supplierName") or "Unknown"
+        
+        table.insert(self.logistics.pendingOrders, {
+            id = getXMLString(xmlFile, key.."#id"),
+            product = getXMLString(xmlFile, key.."#product"),
+            quantity = getXMLInt(xmlFile, key.."#quantity"),
+            leadTime = getXMLInt(xmlFile, key.."#leadTime"),
+            orderDate = getXMLInt(xmlFile, key.."#orderDate"),
+            status = getXMLString(xmlFile, key.."#status"),
+            estimatedArrival = getXMLInt(xmlFile, key.."#estimatedArrival"),
+            unitPrice = getXMLFloat(xmlFile, key.."#unitPrice"),
+            orderCost = getXMLFloat(xmlFile, key.."#orderCost"),
+            shippingCost = getXMLFloat(xmlFile, key.."#shippingCost"),
+            totalCost = getXMLFloat(xmlFile, key.."#totalCost"),
+            -- Rebuild a safe dummy supplier object so processing functions don't crash
+            supplier = { name = supplierName, reliability = 0.9, priceMultiplier = 1.0, deliveryTime = 7, quality = 0.95 }
+        })
+        pIndex = pIndex + 1
+    end
+
+    -- 6. Load Active Deliveries
+    self.logistics.activeDeliveries = {}
+    local dIndex = 0
+    while true do
+        local key = string.format("advancedFarmLogistics.logistics.activeDeliveries.delivery(%d)", dIndex)
+        if not hasXMLProperty(xmlFile, key) then break end
+
+        table.insert(self.logistics.activeDeliveries, {
+            product = getXMLString(xmlFile, key.."#product"),
+            quantity = getXMLInt(xmlFile, key.."#quantity"),
+            destination = getXMLString(xmlFile, key.."#destination"),
+            status = getXMLString(xmlFile, key.."#status")
+        })
+        dIndex = dIndex + 1
+    end
+
+    delete(xmlFile)
+    print("[AdvancedFarmLogistics] Master save file successfully loaded.")
+end
+
+-- =====================
+-- ENGINE SAVE HOOK
+-- =====================
+local originalSave = FSBaseMission.saveSavegame
+FSBaseMission.saveSavegame = function(self, ...)
+    originalSave(self, ...)
+    if g_AdvancedFarmLogistics and self.missionInfo then
+        g_AdvancedFarmLogistics:saveMasterData(self.missionInfo.savegameDirectory)
+    end
+end
+
 addModEventListener(AdvancedFarmLogistics)
