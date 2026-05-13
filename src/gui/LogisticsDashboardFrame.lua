@@ -89,7 +89,6 @@ function LogisticsDashboardFrame:updateSystemStatus()
 end
 
 function LogisticsDashboardFrame:updateSupplyChainList()
-    -- Clear list
     if self.supplyChainList.deleteListItems then
         self.supplyChainList:deleteListItems()
     elseif self.supplyChainList.elements then
@@ -98,54 +97,32 @@ function LogisticsDashboardFrame:updateSupplyChainList()
         end
     end
     
-    if not g_AdvancedFarmLogistics or not g_AdvancedFarmLogistics.logistics then
-        return
+    if not g_AdvancedFarmLogistics or not g_AdvancedFarmLogistics.logistics then return end
+    
+    local chains = g_AdvancedFarmLogistics.logistics.supplyChains or {}
+    
+    for _, chain in ipairs(chains) do
+        local statusIcon = chain.status == "active" and "[ACTIVE]" or "[DISRUPTED]"
+        local text = string.format("%s %s - %.1f%% efficiency", statusIcon, chain.name, (chain.efficiency or 0) * 100)
+        
+        local textElement = TextElement.new(self.supplyChainList)
+        textElement:applyProfile("multiTextOptionSettingsTitle") -- FIX: Added Profile
+        textElement:setText(text)
+        
+        if self.supplyChainList.addElement then self.supplyChainList:addElement(textElement) end
     end
     
-    -- Check if list is a GuiListElement
-    if self.supplyChainList.addItem then
-        -- Use addItem method if available
-        for _, chain in ipairs(g_AdvancedFarmLogistics.logistics.supplyChains or {}) do
-            local statusIcon = chain.status == "active" and "[ACTIVE]" or "[DISRUPTED]"
-            local text = string.format("%s %s - %.1f%% efficiency", 
-                statusIcon, chain.name, (chain.efficiency or 0) * 100)
-            
-            self.supplyChainList:addItem(text)
-        end
-        
-        if #(g_AdvancedFarmLogistics.logistics.supplyChains or {}) == 0 then
-            self.supplyChainList:addItem("No supply chains configured")
-        end
-    else
-        -- Manual list creation
-        for _, chain in ipairs(g_AdvancedFarmLogistics.logistics.supplyChains or {}) do
-            local statusIcon = chain.status == "active" and "[ACTIVE]" or "[DISRUPTED]"
-            local text = string.format("%s %s - %.1f%% efficiency", 
-                statusIcon, chain.name, (chain.efficiency or 0) * 100)
-            
-            -- Create text element
-            local textElement = TextElement.new(self.supplyChainList)
-            textElement:setText(text)
-            
-            -- Try to add to list
-            if self.supplyChainList.addElement then
-                self.supplyChainList:addElement(textElement)
-            end
-        end
-        
-        if #(g_AdvancedFarmLogistics.logistics.supplyChains or {}) == 0 then
-            local textElement = TextElement.new(self.supplyChainList)
-            textElement:setText("No supply chains configured")
-            textElement:setTextColor(0.7, 0.7, 0.7, 1)
-            if self.supplyChainList.addElement then
-                self.supplyChainList:addElement(textElement)
-            end
-        end
+    if #chains == 0 then
+        local textElement = TextElement.new(self.supplyChainList)
+        textElement:applyProfile("multiTextOptionSettingsTitle") -- FIX: Added Profile
+        textElement:setText("No supply chains configured")
+        textElement:setTextColor(0.7, 0.7, 0.7, 1)
+        if self.supplyChainList.addElement then self.supplyChainList:addElement(textElement) end
     end
 end
 
 function LogisticsDashboardFrame:updateDeliveryList()
-    -- Clear list
+    -- Clear the list
     if self.deliveryList.deleteListItems then
         self.deliveryList:deleteListItems()
     elseif self.deliveryList.elements then
@@ -154,71 +131,52 @@ function LogisticsDashboardFrame:updateDeliveryList()
         end
     end
     
-    if not g_AdvancedFarmLogistics or not g_AdvancedFarmLogistics.logistics then
-        return
-    end
+    if not g_AdvancedFarmLogistics or not g_AdvancedFarmLogistics.logistics then return end
     
     local deliveries = g_AdvancedFarmLogistics.logistics.activeDeliveries or {}
+    local pendingOrders = g_AdvancedFarmLogistics.logistics.pendingOrders or {}
+    local hasItems = false
     
-    if self.deliveryList.addItem then
-        -- Use addItem method
-        for _, delivery in ipairs(deliveries) do
-            local statusIcon = "⏳"
-            if delivery.status == "delivered" then
-                statusIcon = "[DELIVERED]"
-            elseif delivery.status == "in_transit" then
-                statusIcon = "[IN TRANSIT]"
-            end
-            
-            local text = string.format("%s %d %s to %s", 
-                statusIcon, 
-                delivery.quantity or 0, 
-                delivery.product or "Unknown", 
-                delivery.destination or "Unknown")
-            
-            self.deliveryList:addItem(text)
-        end
+    -- 1. Draw Active Deliveries
+    for _, delivery in ipairs(deliveries) do
+        local statusIcon = delivery.status == "delivered" and "[DELIVERED]" or "[IN TRANSIT]"
+        local text = string.format("%s %d %s to %s", statusIcon, delivery.quantity or 0, delivery.product or "Unknown", delivery.destination or "Unknown")
         
-        if #deliveries == 0 then
-            self.deliveryList:addItem("No active deliveries")
-        end
-    else
-        -- Manual list creation
-        for _, delivery in ipairs(deliveries) do
-            local statusIcon = "⏳"
-            if delivery.status == "delivered" then
-                statusIcon = "[DELIVERED]"
-            elseif delivery.status == "in_transit" then
-                statusIcon = "[IN TRANSIT]"
-            end
-            
-            local text = string.format("%s %d %s to %s", 
-                statusIcon, 
-                delivery.quantity or 0, 
-                delivery.product or "Unknown", 
-                delivery.destination or "Unknown")
+        local textElement = TextElement.new(self.deliveryList)
+        textElement:applyProfile("multiTextOptionSettingsTitle")
+        textElement:setText(text)
+        
+        if self.deliveryList.addElement then self.deliveryList:addElement(textElement) end
+        hasItems = true
+    end
+    
+    -- 2. Draw Pending Orders (THE MISSING FIX)
+    for _, order in ipairs(pendingOrders) do
+        if order.status ~= "completed" then
+            local statusIcon = order.status == "arrived" and "[ARRIVED]" or "[ORDERED]"
+            local text = string.format("%s %d %s (Arrives Day %d)", statusIcon, order.quantity or 0, order.product or "Unknown", order.estimatedArrival or 0)
             
             local textElement = TextElement.new(self.deliveryList)
+            textElement:applyProfile("multiTextOptionSettingsTitle")
             textElement:setText(text)
+            textElement:setTextColor(1, 0.8, 0, 1) -- Colors pending orders Yellow for visual distinction
             
-            if self.deliveryList.addElement then
-                self.deliveryList:addElement(textElement)
-            end
+            if self.deliveryList.addElement then self.deliveryList:addElement(textElement) end
+            hasItems = true
         end
-        
-        if #deliveries == 0 then
-            local textElement = TextElement.new(self.deliveryList)
-            textElement:setText("No active deliveries")
-            textElement:setTextColor(0.7, 0.7, 0.7, 1)
-            if self.deliveryList.addElement then
-                self.deliveryList:addElement(textElement)
-            end
-        end
+    end
+    
+    -- 3. Draw Empty State Fallback
+    if not hasItems then
+        local textElement = TextElement.new(self.deliveryList)
+        textElement:applyProfile("multiTextOptionSettingsTitle")
+        textElement:setText("No active deliveries or orders")
+        textElement:setTextColor(0.7, 0.7, 0.7, 1)
+        if self.deliveryList.addElement then self.deliveryList:addElement(textElement) end
     end
 end
 
 function LogisticsDashboardFrame:updateInventoryList()
-    -- Clear list
     if self.inventoryList.deleteListItems then
         self.inventoryList:deleteListItems()
     elseif self.inventoryList.elements then
@@ -227,49 +185,29 @@ function LogisticsDashboardFrame:updateInventoryList()
         end
     end
     
-    if not g_AdvancedFarmLogistics or not g_AdvancedFarmLogistics.logistics then
-        return
-    end
+    if not g_AdvancedFarmLogistics or not g_AdvancedFarmLogistics.logistics then return end
     
     local hasInventory = false
     local warehouseInventory = g_AdvancedFarmLogistics.logistics.warehouseInventory or {}
     
-    if self.inventoryList.addItem then
-        -- Use addItem method
-        for product, quantity in pairs(warehouseInventory) do
-            if quantity > 0 then
-                local text = string.format("%s: %d units", product, quantity)
-                self.inventoryList:addItem(text)
-                hasInventory = true
-            end
-        end
-        
-        if not hasInventory then
-            self.inventoryList:addItem("Inventory empty")
-        end
-    else
-        -- Manual list creation
-        for product, quantity in pairs(warehouseInventory) do
-            if quantity > 0 then
-                local text = string.format("%s: %d units", product, quantity)
-                local textElement = TextElement.new(self.inventoryList)
-                textElement:setText(text)
-                
-                if self.inventoryList.addElement then
-                    self.inventoryList:addElement(textElement)
-                end
-                hasInventory = true
-            end
-        end
-        
-        if not hasInventory then
+    for product, quantity in pairs(warehouseInventory) do
+        if quantity > 0 then
+            local text = string.format("%s: %d units", product, quantity)
             local textElement = TextElement.new(self.inventoryList)
-            textElement:setText("Inventory empty")
-            textElement:setTextColor(0.7, 0.7, 0.7, 1)
-            if self.inventoryList.addElement then
-                self.inventoryList:addElement(textElement)
-            end
+            textElement:applyProfile("multiTextOptionSettingsTitle") -- FIX: Added Profile
+            textElement:setText(text)
+            
+            if self.inventoryList.addElement then self.inventoryList:addElement(textElement) end
+            hasInventory = true
         end
+    end
+    
+    if not hasInventory then
+        local textElement = TextElement.new(self.inventoryList)
+        textElement:applyProfile("multiTextOptionSettingsTitle") -- FIX: Added Profile
+        textElement:setText("Inventory empty")
+        textElement:setTextColor(0.7, 0.7, 0.7, 1)
+        if self.inventoryList.addElement then self.inventoryList:addElement(textElement) end
     end
 end
 
